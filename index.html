@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
+    <title>Dải Ngân Hà 3D - Galaxy Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            overflow: hidden;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            background-color: #000; 
+        }
+        body {
+            background: radial-gradient(ellipse at center, #0a0a0a 0%, #000000 100%);
+            font-family: 'Orbitron', 'Courier New', monospace;
+            perspective: 1500px;
+            cursor: grab;
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+            background-color: #000;
+        }
+        body:active {
+            cursor: grabbing;
+        }
+        .galaxy-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transform: translate(-50%, -50%) rotateX(0deg) rotateY(0deg) scale(1);
+            will-change: transform;
+        }
+        .text-particle {
+            position: absolute;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+            text-shadow: 
+                0 0 10px currentColor,
+                0 0 20px currentColor,
+                0 0 30px currentColor,
+                2px 2px 4px rgba(0,0,0,0.8);
+            transform-style: preserve-3d;
+            pointer-events: none;
+            letter-spacing: 1px;
+            will-change: transform, opacity;
+            backface-visibility: hidden;
+            transform: translateZ(0);
+        }
+        .text-particle.love {
+            color: #ff6b9d;
+            text-shadow: 
+                0 0 15px currentColor,
+                0 0 25px currentColor,
+                0 0 35px currentColor,
+                2px 2px 6px rgba(0,0,0,0.9);
+        }
+        .text-particle.birthday {
+            color: #4ecdc4;
+            text-shadow: 
+                0 0 15px currentColor,
+                0 0 25px currentColor,
+                0 0 35px currentColor,
+                2px 2px 6px rgba(0,0,0,0.9);
+        }
+        .text-particle.date {
+            color: #c534ed;
+            text-shadow: 
+                0 0 20px currentColor,
+                0 0 30px currentColor,
+                0 0 40px currentColor,
+                2px 2px 6px rgba(0,0,0,0.9);
+        }
+        .text-particle.special {
+            color: #f34bce;
+            text-shadow: 
+                0 0 15px currentColor,
+                0 0 25px currentColor,
+                0 0 35px currentColor,
+                2px 2px 6px rgba(0,0,0,0.9);
+        }
+        .text-particle.heart {
+            color: #ff69b4;
+            text-shadow: 
+                0 0 20px currentColor,
+                0 0 30px currentColor,
+                0 0 40px currentColor,
+                3px 3px 8px rgba(0,0,0,0.9);
+        }
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px white;
+            animation: twinkle 3s infinite;
+            will-change: opacity;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        .image-particle {
+            transition: opacity 0.3s;
+            will-change: transform, opacity;
+            z-index: 2;
+        }
+        @media (max-width: 768px) {
+            body {
+                perspective: 1000px;
+            }
+            .galaxy-container {
+                perspective: 1000px;
+            }
+            .text-particle {
+                font-size: 12px;
+                letter-spacing: 0.5px;
+            }
+            .text-particle.heart {
+                font-size: 16px;
+            }
+            .star {
+                width: 1.5px;
+                height: 1.5px;
+            }
+        }
+        @media (max-width: 480px) {
+            .text-particle {
+                font-size: 10px;
+                letter-spacing: 0.3px;
+            }
+            .text-particle.heart {
+                font-size: 14px;
+            }
+            .star {
+                width: 1px;
+                height: 1px;
+            }
+        }
+        @media (max-height: 500px) and (orientation: landscape) {
+            .text-particle {
+                font-size: 10px;
+            }
+            .text-particle.heart {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="galaxy-container" id="galaxy"></div>
+    <audio id="galaxyAudio" controls style="display:none"></audio>
+    <script>
+        const galaxyData = {
+            messages: [
+                "I love you so much! ❤️",
+                "Our Anniversary",
+                "I love you 💖",
+                "25/08/2004",
+                "Thank you for being my sunshine",
+                "Thank you for being my everything 💕",
+                "You are my universe",
+                "There is no other",
+                "You’re amazing",
+                "You make my heart smile",
+                "Love ya! 💖",
+                "Honey bunch, you are my everything!"
+            ],
+            icons: ["♥", "💖", "❤️", "💕"],
+            colors: {
+                love: "#ff6b9d",
+                birthday: "#4ecdc4",
+                date: "#c534ed",
+                special: "#f34bce",
+                heart: "#ff69b4"
+            },
+            images: [
+                "../anhne/image1.jpg",
+                "../anhne/image2.jpg",
+                "../anhne/image3.png"
+            ],
+            song: "../songs/eyenoselip.mp3"
+        };
+
+        const galaxy = document.getElementById('galaxy');
+        let rotationX = 0;
+        let rotationY = 0;
+        let scale = 1;
+        let isDragging = false;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+        const activeParticles = new Set();
+        const isMobile = window.innerWidth <= 768;
+        const isSmallMobile = window.innerWidth <= 480;
+        const maxParticles = isSmallMobile ? 150 : isMobile ? 200 : 300;
+        const particleInterval = isMobile ? 100 : 120;
+        const starCount = isSmallMobile ? 250 : isMobile ? 350 : 500;
+        let particleSpeedMultiplier = 1;
+
+        document.addEventListener('mousedown', () => {
+            particleSpeedMultiplier = 1.7;
+        });
+        document.addEventListener('mouseup', () => {
+            particleSpeedMultiplier = 1;
+        });
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) particleSpeedMultiplier = 1.7;
+        });
+        document.addEventListener('touchend', () => {
+            particleSpeedMultiplier = 1;
+        });
+
+        document.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+        document.addEventListener('wheel', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
+        document.addEventListener('gesturechange', function(e) {
+            e.preventDefault();
+        });
+        document.addEventListener('gestureend', function(e) {
+            e.preventDefault();
+        });
+
+        function initializeGalaxy() {
+            const style = document.createElement('style');
+            style.textContent = `
+                .text-particle.love { color: ${galaxyData.colors.love}; text-shadow: 0 0 15px ${galaxyData.colors.love}, 0 0 25px ${galaxyData.colors.love}, 0 0 35px ${galaxyData.colors.love}, 2px 2px 6px rgba(0,0,0,0.9); }
+                .text-particle.birthday { color: ${galaxyData.colors.birthday}; text-shadow: 0 0 15px ${galaxyData.colors.birthday}, 0 0 25px ${galaxyData.colors.birthday}, 0 0 35px ${galaxyData.colors.birthday}, 2px 2px 6px rgba(0,0,0,0.9); }
+                .text-particle.date { color: ${galaxyData.colors.date}; text-shadow: 0 0 20px ${galaxyData.colors.date}, 0 0 30px ${galaxyData.colors.date}, 0 0 40px ${galaxyData.colors.date}, 2px 2px 6px rgba(0,0,0,0.9); }
+                .text-particle.special { color: ${galaxyData.colors.special}; text-shadow: 0 0 15px ${galaxyData.colors.special}, 0 0 25px ${galaxyData.colors.special}, 0 0 35px ${galaxyData.colors.special}, 2px 2px 6px rgba(0,0,0,0.9); }
+                .text-particle.heart { color: ${galaxyData.colors.heart}; text-shadow: 0 0 20px ${galaxyData.colors.heart}, 0 0 30px ${galaxyData.colors.heart}, 0 0 40px ${galaxyData.colors.heart}, 3px 3px 8px rgba(0,0,0,0.9); }
+            `;
+            document.head.appendChild(style);
+
+            if (galaxyData.song) {
+                const audio = document.getElementById('galaxyAudio');
+                audio.src = galaxyData.song;
+                audio.play().catch(() => {});
+                const playAudioOnUserGesture = () => {
+                    audio.play().catch(() => {});
+                    document.removeEventListener('touchstart', playAudioOnUserGesture);
+                    document.removeEventListener('click', playAudioOnUserGesture);
+                };
+                document.addEventListener('touchstart', playAudioOnUserGesture);
+                document.addEventListener('click', playAudioOnUserGesture);
+            }
+
+            createStars();
+            startParticleAnimation();
+        }
+
+        function getRandomMessage() {
+            return galaxyData.messages[Math.floor(Math.random() * galaxyData.messages.length)];
+        }
+
+        function getRandomIcon() {
+            return galaxyData.icons[Math.floor(Math.random() * galaxyData.icons.length)];
+        }
+
+        function getMessageClass(message) {
+            const lowerMessage = message.toLowerCase();
+            if (lowerMessage.includes("love") || lowerMessage.includes("yêu") || lowerMessage.includes("tình")) {
+                return "love";
+            } else if (lowerMessage.includes("birthday") || lowerMessage.includes("sinh nhật") || lowerMessage.includes("chúc mừng")) {
+                return "birthday";
+            } else if (/\d/.test(message) || message.includes("/")) {
+                return "date";
+            } else {
+                return "special";
+            }
+        }
+
+        function createTextParticle() {
+            if (activeParticles.size >= maxParticles) {
+                return;
+            }
+            const isIcon = Math.random() > 0.7;
+            const element = document.createElement('div');
+            
+            if (isIcon) {
+                element.className = 'text-particle heart';
+                element.textContent = getRandomIcon();
+            } else {
+                const message = getRandomMessage();
+                element.className = `text-particle ${getMessageClass(message)}`;
+                element.textContent = message;
+            }
+            
+            const xPos = Math.random() * 100;
+            const zPos = (Math.random() - 0.5) * (isMobile ? 300 : 500);
+            const animationDuration = Math.random() * 2 + (isMobile ? 3 : 3);
+            
+            element.style.left = xPos + '%';
+            
+            const baseFontSize = isSmallMobile ? 8 : isMobile ? 12 : 18;
+            const fontSizeVariation = isSmallMobile ? 4 : isMobile ? 5 : 8;
+            element.style.fontSize = (Math.random() * fontSizeVariation + baseFontSize) + 'px';
+
+            const depthOpacity = Math.max(0.4, 1 - Math.abs(zPos) / (isMobile ? 250 : 400));
+            element.style.opacity = depthOpacity;
+            
+            let startTime = null;
+            let startY = -150;
+            let endY = window.innerHeight + 150;
+            const thisParticleSpeed = particleSpeedMultiplier;
+
+            function animateParticle(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const progress = (timestamp - startTime) / (animationDuration * 1000 * thisParticleSpeed);
+                
+                if (progress < 1) {
+                    const currentY = startY + (endY - startY) * progress;
+                    const opacity = progress < 0.05 ? progress * 20 : 
+                                  progress > 0.95 ? (1 - progress) * 20 : 
+                                  depthOpacity;
+                    
+                    element.style.transform = `translate3d(0, ${currentY}px, ${zPos}px)`;
+                    element.style.opacity = opacity;
+                    
+                    requestAnimationFrame(animateParticle);
+                } else {
+                    if (element.parentNode) {
+                        element.parentNode.removeChild(element);
+                        activeParticles.delete(element);
+                    }
+                }
+            }
+            
+            galaxy.appendChild(element);
+            activeParticles.add(element);
+            requestAnimationFrame(animateParticle);
+        }
+
+        function createImageParticle() {
+            if (!galaxyData.images || galaxyData.images.length === 0) return;
+            if (activeParticles.size >= maxParticles) return;
+            const imgUrl = galaxyData.images[Math.floor(Math.random() * galaxyData.images.length)];
+            const element = document.createElement('img');
+            element.src = imgUrl;
+            element.className = 'image-particle';
+            element.style.position = 'absolute';
+            element.style.width = (isSmallMobile ? 32 : isMobile ? 40 : 68) + 'px';
+            element.style.height = (isSmallMobile ? 32 : isMobile ? 40 : 68) + 'px';
+            element.style.objectFit = 'cover';
+            element.style.borderRadius = '12px';
+            element.style.boxShadow = '0 0 20px #fff8, 0 2px 8px #000a';
+            element.style.pointerEvents = 'none';
+            const xPos = Math.random() * 100;
+            const zPos = (Math.random() - 0.5) * (isMobile ? 300 : 500);
+            const animationDuration = Math.random() * 2 + (isMobile ? 3 : 3);
+            element.style.left = xPos + '%';
+            let startTime = null;
+            let startY = -100;
+            let endY = window.innerHeight + 100;
+            const thisParticleSpeed = particleSpeedMultiplier;
+
+            function animateParticle(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const progress = (timestamp - startTime) / (animationDuration * 1000 * thisParticleSpeed);
+                if (progress < 1) {
+                    const currentY = startY + (endY - startY) * progress;
+                    const opacity = progress < 0.05 ? progress * 20 :
+                            progress > 0.95 ? (1 - progress) * 20 : 1;
+                    element.style.transform = `translate3d(0, ${currentY}px, ${zPos}px)`;
+                    element.style.opacity = opacity;
+                    requestAnimationFrame(animateParticle);
+                } else {
+                    if (element.parentNode) {
+                        element.parentNode.removeChild(element);
+                        activeParticles.delete(element);
+                    }
+                }
+            }
+            galaxy.appendChild(element);
+            activeParticles.add(element);
+            requestAnimationFrame(animateParticle);
+        }
+
+        function createStars() {
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                const angle = Math.random() * Math.PI * 10;
+                const radius = Math.random() * (isMobile ? 800 : 1500) + (isMobile ? 200 : 300);
+                const spiralHeight = Math.sin(angle) * (isMobile ? 100 : 150);
+                
+                const x = Math.cos(angle) * radius;
+                const y = spiralHeight + (Math.random() - 0.5) * (isMobile ? 1000 : 2000);
+                const z = Math.sin(angle) * radius * 0.5;
+                
+                star.style.left = `calc(50% + ${x}px)`;
+                star.style.top = `calc(50% + ${y}px)`;
+                star.style.transform = `translateZ(${z}px)`;
+                star.style.animationDelay = Math.random() * 3 + 's';
+                
+                const depthBrightness = Math.max(0.1, 1 - Math.abs(z) / (isMobile ? 800 : 1200));
+                star.style.opacity = depthBrightness;
+                
+                galaxy.appendChild(star);
+            }
+        }
+
+        function updateGalaxyTransform() {
+            requestAnimationFrame(() => {
+                galaxy.style.transform = `translate(-50%, -50%) rotateX(${rotationX}deg) rotateY(${rotationY}deg) scale(${scale})`;
+            });
+        }
+
+        function startParticleAnimation() {
+            setInterval(() => {
+                if (galaxyData.images && galaxyData.images.length > 0 && Math.random() < 0.2) {
+                    createImageParticle();
+                } else {
+                    createTextParticle();
+                }
+            }, particleInterval);
+            const initialParticles = isMobile ? 25 : 20;
+            for (let i = 0; i < initialParticles; i++) {
+                setTimeout(() => {
+                    if (galaxyData.images && galaxyData.images.length > 0 && Math.random() < 0.2) {
+                        createImageParticle();
+                    } else {
+                        createTextParticle();
+                    }
+                }, i * (particleInterval * 0.6));
+            }
+        }
+
+        document.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const deltaX = e.clientX - lastMouseX;
+                const deltaY = e.clientY - lastMouseY;
+                
+                const sensitivity = isMobile ? 0.3 : 0.5;
+                rotationY += deltaX * sensitivity;
+                rotationX -= deltaY * sensitivity;
+                
+                updateGalaxyTransform();
+                
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+            }
+        });
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        let initialDistance = 0;
+        let initialScale = 1;
+        document.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (e.touches.length === 1) {
+                isDragging = true;
+                lastMouseX = e.touches[0].clientX;
+                lastMouseY = e.touches[0].clientY;
+            } else if (e.touches.length === 2) {
+                isDragging = false;
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                initialDistance = Math.sqrt(
+                    Math.pow(touch2.clientX - touch1.clientX, 2) +
+                    Math.pow(touch2.clientY - touch1.clientY, 2)
+                );
+                initialScale = scale;
+            }
+        }, { passive: false });
+        document.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (e.touches.length === 1 && isDragging) {
+                const deltaX = e.touches[0].clientX - lastMouseX;
+                const deltaY = e.touches[0].clientY - lastMouseY;
+                
+                const sensitivity = 0.3;
+                rotationY += deltaX * sensitivity;
+                rotationX -= deltaY * sensitivity;
+                
+                updateGalaxyTransform();
+                
+                lastMouseX = e.touches[0].clientX;
+                lastMouseY = e.touches[0].clientY;
+            } else if (e.touches.length === 2) {
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = Math.sqrt(
+                    Math.pow(touch2.clientX - touch1.clientX, 2) +
+                    Math.pow(touch2.clientY - touch1.clientY, 2)
+                );
+                
+                const scaleChange = currentDistance / initialDistance;
+                scale = Math.max(0.5, Math.min(2, initialScale * scaleChange));
+                
+                updateGalaxyTransform();
+            }
+        }, { passive: false });
+        document.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            isDragging = false;
+        }, { passive: false });
+
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                location.reload();
+            }, 100);
+        });
+
+        initializeGalaxy();
+    </script>
+</body>
+</html>
