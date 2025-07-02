@@ -8,7 +8,7 @@
 // @grant        none
 // ==/UserScript==
     (() => {
-  let speed = 10;
+  let speed = 100;
   let fakeTime = Date.now();
   let intervalId = null;
 
